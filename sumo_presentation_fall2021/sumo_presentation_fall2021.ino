@@ -1,8 +1,6 @@
 #include <Move.h>
 #include <NewPing.h>
 
-Move move(11, 10, 12, 13);
-
 NewPing sensors[7] = {
   NewPing( 2, 2, 100), //sensor 1 left 90 degree
   NewPing( 3, 3, 100), //sensor 2 left 45 degree
@@ -13,6 +11,8 @@ NewPing sensors[7] = {
   NewPing( 9, 8, 100)  //sensor 7 back 180 degree
 };
 
+Move move(11, 10, 12, 13);
+
 int dt = 100; // delay time
 
 int max_backup_distance = 10; // [cm] backup at this distance from something
@@ -20,11 +20,8 @@ int max_stop_distance = 20;   // [cm] stop at this distance from something
 int max_follow_distance = 40; // [cm] max distance to track objects
 
 void setup() {
-
   Serial.begin(115200);
-
-  // sets the robot to drive forward and go 60% power
-  move.power(60); // 153 for 60%, 204 for 80%
+  move.power(60);
   delay(1000);
 }
 
@@ -55,13 +52,13 @@ void loop() {
   }
   else {
     // if object in left front sensor and not in right front sensor, turn left slowly
-    if (sensors[2].ping_cm() < max_follow_distance && (sensors[3].ping_cm() > max_follow_distance || sensors[3].ping_cm() == 0)) {
+    if (sensors[2].ping_cm() < max_follow_distance && sensors[2].ping_cm() > 0 && (sensors[3].ping_cm() > max_follow_distance || sensors[3].ping_cm() == 0)) {
       move.power(20);
       move.left();
       delay(dt);
     }
     // if object in right front sensor and not in left front sensor, turn right slowly
-    if (sensors[3].ping_cm() < max_follow_distance && (sensors[2].ping_cm() > max_follow_distance || sensors[2].ping_cm() == 0)) {
+    if (sensors[3].ping_cm() < max_follow_distance && sensors[3].ping_cm() > 0 && (sensors[2].ping_cm() > max_follow_distance || sensors[2].ping_cm() == 0)) {
       move.power(20);
       move.right();
       delay(dt);
