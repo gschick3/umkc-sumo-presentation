@@ -10,9 +10,9 @@ Move::Move(int pwm1, int pwm2, int dir1, int dir2)
 	this->dir2 = dir2; // Direction of left motor (low is forward)
 }
 
-Move* Move::power(int setPower)
+Move* Move::power(int powerLevel)
 {
-	powerValue = setPower;
+	powerValue = int(powerLevel * 2.55); // convert from percentage to number between 0 and 255
 	return this;
 }
 
