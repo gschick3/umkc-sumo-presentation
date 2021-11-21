@@ -13,45 +13,70 @@ NewPing sensors[7] = {
   NewPing( 9, 8, 100)  //sensor 7 back 180 degree
 };
 
-int delay_time = 50;
+int dt = 100; // delay time
 
-int backup_distance = 10; // [cm] backup at this distance from something
-int follow_max = 70;      // [cm] follow things no farther than this
-int stop_distance = 40;   // [cm] stop at this distance from something
+int max_backup_distance = 10; // [cm] backup at this distance from something
+int max_stop_distance = 20;   // [cm] stop at this distance from something
+int max_follow_distance = 40; // [cm] max distance to track objects
 
 void setup() {
 
   Serial.begin(115200);
 
   // sets the robot to drive forward and go 60% power
-  move.power(255); // 153 for 60%, 204 for 80%
+  move.power(60); // 153 for 60%, 204 for 80%
   delay(1000);
 }
 
 void loop() {
-  // if left sensors detect object, turn left
-  if(sensors[0].ping_cm() > 0 && sensors[0].ping_cm() < follow_max || sensors[1].ping_cm() > 0 && sensors[1].ping_cm() < follow_max) {
-    Serial.println("Turn left");
+  // if far left sensor sees object, turn left quickly
+  if(sensors[0].ping_cm() > 0 && sensors[0].ping_cm() < max_follow_distance) {
+    move.power(100);
     move.left();
-    delay(delay_time);
+    delay(dt);
   }
-  // if right sensors detect object, turn right
-  else if(sensors[5].ping_cm() > 0 && sensors[5].ping_cm() < follow_max || sensors[4].ping_cm() > 0 && sensors[4].ping_cm() < follow_max) {
-    Serial.println("Turn right");
+  // if far right sensor sees object, turn right quickly
+  else if(sensors[5].ping_cm() > 0 && sensors[5].ping_cm() < max_follow_distance) {
+    move.power(100);
     move.right();
-    delay(delay_time);
+    delay(dt);
   }
-  
-  // if front sensors detect objects and are far enough away, drive forward
-  if(sensors[2].ping_cm() > stop_distance && sensors[2].ping_cm() < follow_max || sensors[3].ping_cm() > stop_distance && sensors[3].ping_cm() < follow_max) {
-    Serial.println("Move forward");
-    move.forward();
-    delay(delay_time);
+  // if close left sensor sees object, turn left moderately
+  else if (sensors[1].ping_cm() > 0 && sensors[1].ping_cm() < max_follow_distance) {
+    move.power(80);
+    move.left();
+    delay(dt);
   }
-  // if front sensors detect objects and are too close, drive backward
-  else if(sensors[3].ping_cm() < backup_distance && sensors[3].ping_cm() > 0 || sensors[3].ping_cm() < backup_distance && sensors[3].ping_cm() > 0) {
-    Serial.println("Move backward");
-    move.backward();
-    delay(delay_time);
+  // if close right sensor sees object, turn right moderately
+  else if (sensors[4].ping_cm() > 0 && sensors[4].ping_cm() < max_follow_distance) {
+    move.power(80);
+    move.right();
+    delay(dt);
+  }
+  else {
+    // if object in left front sensor and not in right front sensor, turn left slowly
+    if (sensors[2].ping_cm() < max_follow_distance && (sensors[3].ping_cm() > max_follow_distance || sensors[3].ping_cm() == 0)) {
+      move.power(20);
+      move.left();
+      delay(dt);
+    }
+    // if object in right front sensor and not in left front sensor, turn right slowly
+    if (sensors[3].ping_cm() < max_follow_distance && (sensors[2].ping_cm() > max_follow_distance || sensors[2].ping_cm() == 0)) {
+      move.power(20);
+      move.right();
+      delay(dt);
+    }
+    // if object in both sensors, move forward
+    if (sensors[2].ping_cm() > max_stop_distance && sensors[2].ping_cm() < max_follow_distance && sensors[3].ping_cm() > max_stop_distance && sensors[3].ping_cm() < max_follow_distance) {
+      move.power(60);
+      move.forward();
+      delay(dt);
+    }
+    // if object is too close in both sensors, back up
+    if (sensors[2].ping_cm() < max_backup_distance && sensors[2].ping_cm() > 0 && sensors[3].ping_cm() < max_backup_distance && sensors[3].ping_cm() > 0) {
+      move.power(60);
+      move.backward();
+      delay(dt);
+    }
   }
 }
